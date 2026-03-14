@@ -83,9 +83,11 @@ jobs:
 
       - name: Run OWASP ZAP DAST
         run: |
-          docker run --rm -v $(pwd):/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t http://${{ secrets.SERVER_HOST }}:5000 -r dast_report.html || true
-
+          mkdir -p zap_output && chmod 777 zap_output
+          docker run --rm -v $(pwd)/zap_output:/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://${{ secrets.SERVER_HOST }}:5000 -r /zap/wrk/dast_report.html || true
+          cp zap_output/dast_report.html ./
+     
       - name: Upload DAST report
         uses: actions/upload-artifact@v4
         with:
