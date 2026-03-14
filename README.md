@@ -48,7 +48,7 @@ DOCKER_USERNAME, DOCKER_PASSWORD - учётные данные Docker Hub (па�
 
 Шаг деплоя в workflow:
 
-yaml
+```
 - name: Deploy to server
   uses: appleboy/ssh-action@v1.0.3
   with:
@@ -60,6 +60,8 @@ yaml
       docker rm flaskr || true
       docker pull ${{ secrets.DOCKER_USERNAME }}/devsecops-diploma:latest
       docker run -d --name flaskr -p 5000:5000 ${{ secrets.DOCKER_USERNAME }}/devsecops-diploma:latest
+```
+
 Команды останавливают старый контейнер, загружают свежий образ и запускают новый контейнер с пробросом порта 5000.
 
 Результат
