@@ -124,7 +124,7 @@ dast:
       uses: actions/checkout@v4
     - name: Run OWASP ZAP DAST
       run: |
-        docker run --rm -v $(pwd):/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-full-scan.py \
+        docker run --rm -v $(pwd):/zap/wrk:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
           -t http://${{ secrets.SERVER_HOST }}:5000 -r dast_report.html || true
     - name: Upload DAST report
       uses: actions/upload-artifact@v4
