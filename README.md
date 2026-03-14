@@ -106,7 +106,7 @@
   - Сканируется образ `${{ secrets.DOCKER_USERNAME }}/devsecops-diploma:latest`.
   - Формат отчёта - SARIF (поддерживается GitHub Security tab).
   - Уровень серьёзности: `CRITICAL,HIGH`.
-  - `exit-code: '0'` - пайплайн не останавливается при обнаружении уязвимостей (позволяет сохранить отчёт).
+  - `exit-code: '0'` - пайплайн не останавливается при обнаружении уязвимостей (позволяет сохранить отчёт, но при необходимости можно изменить на '1' для остановки).
 - **Результаты:**
   - Отчёт загружается во вкладку **Security** репозитория GitHub.
   - Копия отчёта сохраняется как артефакт `trivy-report.sarif`.
@@ -156,14 +156,37 @@
 Добавлен отдельный job `comment-pr`, который срабатывает только при событии `pull_request` и после завершения всех проверок. Он оставляет в PR комментарий со ссылками на все артефакты безопасности, что упрощает доступ к отчётам для ревьюеров.
 
 ```yaml
-        Comment PR with results
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ **CI Pipeline completed**\n- SAST (Bandit): see artifact `bandit-report`\n- Docker image built and pushed.\n-'
-            })
+  comment-pr:
+  if: github.event_name == 'pull_request'
+  runs-on: ubuntu-latest
+  needs: [test-and-build, dast, gitleaks, trivy]
+  steps:
+    - name: Comment PR with artifact links
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const artifactsUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## Security pipeline completed\n\n` +
+                  `- [SAST Bandit report](${artifactsUrl})\n` +
+                  `- [DAST OWASP ZAP report](${artifactsUrl})\n` +
+                  `- [Gitleaks secrets report](${artifactsUrl})\n` +
+                  `- [Trivy image scan report](${artifactsUrl})\n\n` +
+                  `_Click on the links to download the artifacts._`
+          });
+```
+
+### Заключение
+
+В результате работы создан полностью автоматизированный DevSecOps-пайплайн, включающий:
+
+- непрерывную интеграцию и доставку (CI/CD),
+- статический анализ безопасности (SAST),
+- динамический анализ безопасности (DAST),
+- проверки на секреты и уязвимости образов (Security Checks),
+- шлюз безопасности с остановкой пайплайна при критических уязвимостях и комментариями в Pull Request.
+
+Все отчёты сохраняются как артефакты и доступны для анализа. Пайплайн готов к использованию и может быть расширен дополнительными проверками.
