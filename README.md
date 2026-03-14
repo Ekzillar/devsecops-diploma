@@ -156,24 +156,14 @@
 Добавлен отдельный job `comment-pr`, который срабатывает только при событии `pull_request` и после завершения всех проверок. Он оставляет в PR комментарий со ссылками на все артефакты безопасности, что упрощает доступ к отчётам для ревьюеров.
 
 ```yaml
-comment-pr:
-  if: github.event_name == 'pull_request'
-  needs: [test-and-build, dast, gitleaks, trivy]
-  runs-on: ubuntu-latest
-  steps:
-    - name: Comment PR with artifact links
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const artifactsUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: `## ✅ Security pipeline completed\n\n` +
-                  `- [SAST Bandit report](${artifactsUrl})\n` +
-                  `- [DAST OWASP ZAP report](${artifactsUrl})\n` +
-                  `- [Gitleaks secrets report](${artifactsUrl})\n` +
-                  `- [Trivy image scan report](${artifactsUrl})\n\n` +
-                  `_Click on the links to download the artifacts._`
-          });
+        Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **CI Pipeline completed**\n- SAST (Bandit): see artifact `bandit-report`\n- Docker image built and pushed.\n-'
+            })
