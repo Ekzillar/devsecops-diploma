@@ -147,8 +147,9 @@ jobs:
           path: trivy-results.sarif
 
   comment-pr:
-    if: github.event_name == 'pull_request' && always()
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    needs: [test-and-build, dast, gitleaks, trivy]
     steps:
       - name: Comment PR with artifact links
         uses: actions/github-script@v7
