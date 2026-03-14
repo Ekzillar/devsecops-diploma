@@ -87,3 +87,68 @@
     Отсутствие заголовков безопасности (CSP, X-Frame-Options и др.)
     Утечка версии сервера.
 
+## Этап 4: Security Checks
+
+**Цель:** автоматическая проверка кода на наличие секретов и сканирование Docker-образа на уязвимости.
+
+### Проверка на секреты (Gitleaks)
+
+- **Инструмент:** [Gitleaks](https://github.com/gitleaks/gitleaks) - статический анализатор для обнаружения паролей, ключей API и других секретов в репозитории.
+- **Интеграция:** запускается параллельно с основными job в отдельном job `gitleaks`.
+- **Конфигурация:** используется образ `zricethezav/gitleaks:latest`, сканирование выполняется с сохранением отчёта в формате JSON. Пока pipeline не останавливается при находках (установлен `continue-on-error: true`), чтобы можно было анализировать отчёты без блокировки.
+- **Результат:** отчёт `gitleaks-report.json` сохраняется как артефакт сборки и доступен для скачивания.
+
+### Сканирование образа (Trivy)
+
+- **Инструмент:** [Trivy](https://github.com/aquasecurity/trivy) - сканер уязвимостей для контейнеров и файловых систем.
+- **Интеграция:** job `trivy` запускается после успешной сборки образа (`needs: test-and-build`).
+- **Параметры:**
+  - Сканируется образ `${{ secrets.DOCKER_USERNAME }}/devsecops-diploma:latest`.
+  - Формат отчёта - SARIF (поддерживается GitHub Security tab).
+  - Уровень серьёзности: `CRITICAL,HIGH`.
+- **Результаты:**
+  - Отчёт загружается во вкладку **Security** репозитория GitHub.
+  - Копия отчёта сохраняется как артефакт `trivy-report.sarif`.
+  - На данный момент пайплайн **останавливается** при обнаружении уязвимостей (параметр `exit-code` может быть закомментирован).
+
+---
+
+## Этап 5: Security Gateway
+
+**Цель:** автоматическая остановка пайплайна при обнаружении уязвимостей критического уровня и обратная связь в Pull Request.
+
+### Реализованные механизмы
+
+| Инструмент | Статус остановки | Детали |
+|------------|------------------|--------|
+| **Bandit (SAST)** | **Останавливает** | Запускается без `|| true`; при наличии уязвимостей уровня HIGH и выше job `test-and-build` завершается ошибкой, прерывая весь пайплайн. |
+| **OWASP ZAP (DAST)** | Не останавливает | Используется `|| true`, что позволяет сканированию выполняться без прерывания. В дальнейшем можно настроить анализ результатов. |
+| **Gitleaks** | Не останавливает | Установлен `continue-on-error: true`. Отчёт сохраняется, но pipeline продолжается. |
+| **Trivy** | Не останавливает | Параметр `exit-code` закомментирован. При желании может быть активирован. |
+
+### Комментарии в Pull Request
+
+Добавлен отдельный job `comment-pr`, который срабатывает только при событии `pull_request` и после завершения всех проверок. Он оставляет в PR комментарий со ссылками на все артефакты безопасности, что упрощает доступ к отчётам для ревьюеров.
+
+```yaml
+comment-pr:
+  if: github.event_name == 'pull_request'
+  needs: [test-and-build, dast, gitleaks, trivy]
+  runs-on: ubuntu-latest
+  steps:
+    - name: Comment PR with artifact links
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const artifactsUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## ✅ Security pipeline completed\n\n` +
+                  `- [SAST Bandit report](${artifactsUrl})\n` +
+                  `- [DAST OWASP ZAP report](${artifactsUrl})\n` +
+                  `- [Gitleaks secrets report](${artifactsUrl})\n` +
+                  `- [Trivy image scan report](${artifactsUrl})\n\n` +
+                  `_Click on the links to download the artifacts._`
+          });
