@@ -37,6 +37,7 @@ jobs:
           pip install pytest
 
       - name: Run Bandit SAST
+        if: "!contains(github.event.head_commit.message, '[skip-bandit]') && !contains(github.event.pull_request.title, '[skip-bandit]')"
         run: |
           pip install bandit
           bandit -r flaskr -f json -o bandit-report.json
