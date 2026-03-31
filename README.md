@@ -1,5 +1,7 @@
 # DevSecOps Diploma Project
 
+## Tech Stack: GitHub Actions, Docker, Python (Flask), Bandit, OWASP ZAP, Trivy, Gitleaks, SSH/VPS.
+
 ## Описание проекта
 Веб-приложение **Flaskr** - учебный блог на Flask. Цель проекта - построить безопасный CI/CD пайплайн с интеграцией инструментов безопасности (DevSecOps).
 
