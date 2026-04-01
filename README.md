@@ -1,6 +1,24 @@
 # DevSecOps Diploma Project
 
-## Tech Stack: GitHub Actions, Docker, Python (Flask), Bandit, OWASP ZAP, Trivy, Gitleaks, SSH/VPS.
+![GitHub Actions](https://img.shields.io/badge/CI/CD-GitHub%20Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white)
+![Docker](https://img.shields.io/badge/Containerization-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Python](https://img.shields.io/badge/Backend-Python%203.11-3776AB?style=flat-square&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Framework-Flask-000000?style=flat-square&logo=flask&logoColor=white)
+![Security](https://img.shields.io/badge/Security-DevSecOps-red?style=flat-square)
+
+## 🛠 Стек технологий и инструментов
+
+| Категория | Инструмент | Роль в проекте |
+| :--- | :--- | :--- |
+| **Language** | ![Python](https://img.shields.io/badge/-Python-3776AB?style=flat-square&logo=python&logoColor=white) | Основной язык разработки (Flaskr app). |
+| **CI/CD** | ![GitHub Actions](https://img.shields.io/badge/-GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white) | Автоматизация сборки, тестов и деплоя. |
+| **Virtualization** | ![Docker](https://img.shields.io/badge/-Docker-2496ED?style=flat-square&logo=docker&logoColor=white) | Контейнеризация и изоляция приложения. |
+| **SAST** | **Bandit** | Анализ исходного кода на уязвимости. |
+| **DAST** | **OWASP ZAP** | Поиск векторов атак на работающем сервисе. |
+| **Infrastructure** | **VPS / SSH** | Хостинг приложения на удаленном сервере. |
+| **Secret Scanning** | **Gitleaks** | Контроль утечки API-ключей и паролей. |
+
+---
 
 ## Описание проекта
 Веб-приложение **Flaskr** - учебный блог на Flask. Цель проекта - построить безопасный CI/CD пайплайн с интеграцией инструментов безопасности (DevSecOps).
